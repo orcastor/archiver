@@ -25,7 +25,6 @@ import (
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/encoding/traditionalchinese"
 	"golang.org/x/text/encoding/unicode"
-	"golang.org/x/text/transform"
 )
 
 func init() {
@@ -251,8 +250,7 @@ func (z Zip) Extract(ctx context.Context, sourceArchive io.Reader, pathsInArchiv
 func (z Zip) decodeText(hdr *zip.FileHeader) {
 	filename, err := decodeText(hdr.Name, z.TextEncoding)
 	if !utf8.Valid([]byte(filename)) || strings.Contains(filename, "�") {
-		content, _ := io.ReadAll(transform.NewReader(bytes.NewReader([]byte(hdr.Name)), simplifiedchinese.GB18030.NewDecoder()))
-		filename = string(content)
+		filename, err = simplifiedchinese.GB18030.NewDecoder().String(hdr.Name)
 	}
 	if err == nil {
 		hdr.Name = filename

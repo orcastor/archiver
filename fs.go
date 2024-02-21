@@ -13,8 +13,6 @@ import (
 	"sort"
 	"strings"
 	"time"
-
-	"github.com/klauspost/compress/zip"
 )
 
 // FileSystem opens the file at root as a read-only file system. The root may be a
@@ -58,18 +56,6 @@ func FileSystem(ctx context.Context, root string) (fs.FS, error) {
 
 	if format != nil {
 		switch ff := format.(type) {
-		case Zip:
-			// zip.Reader is more performant than ArchiveFS, because zip.Reader caches content information
-			// and zip.Reader can open several content files concurrently because of io.ReaderAt requirement
-			// while ArchiveFS can't.
-			// zip.Reader doesn't suffer from issue #330 and #310 according to local test (but they should be fixed anyway)
-
-			// open the file anew, as our original handle will be closed when we return
-			file, err := os.Open(root)
-			if err != nil {
-				return nil, err
-			}
-			return zip.NewReader(file, info.Size())
 		case Archival:
 			// TODO: we only really need Extractor and Decompressor here, not the combined interfaces...
 			return ArchiveFS{Path: root, Format: ff, Context: ctx}, nil
