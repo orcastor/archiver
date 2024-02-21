@@ -10,7 +10,6 @@ import (
 	"log"
 	"path"
 	"strings"
-	"unicode/utf8"
 
 	szip "github.com/STARRY-S/zip"
 
@@ -248,17 +247,16 @@ func (z Zip) Extract(ctx context.Context, sourceArchive io.Reader, pathsInArchiv
 // It is a no-op if the text is already UTF-8 encoded or if z.TextEncoding
 // is not specified.
 func (z Zip) decodeText(hdr *zip.FileHeader) {
-	filename, err := decodeText(hdr.Name, z.TextEncoding)
-	if !utf8.Valid([]byte(filename)) || strings.Contains(filename, "�") {
-		filename, err = simplifiedchinese.GB18030.NewDecoder().String(hdr.Name)
-	}
-	if err == nil {
-		hdr.Name = filename
-	}
-	if hdr.Comment != "" {
-		comment, err := decodeText(hdr.Comment, z.TextEncoding)
+	if hdr.NonUTF8 && z.TextEncoding != "" {
+		filename, err := decodeText(hdr.Name, z.TextEncoding)
 		if err == nil {
-			hdr.Comment = comment
+			hdr.Name = filename
+		}
+		if hdr.Comment != "" {
+			comment, err := decodeText(hdr.Comment, z.TextEncoding)
+			if err == nil {
+				hdr.Comment = comment
+			}
 		}
 	}
 }
