@@ -251,7 +251,7 @@ func (z Zip) Extract(ctx context.Context, sourceArchive io.Reader, pathsInArchiv
 func (z Zip) decodeText(hdr *zip.FileHeader) {
 	filename, err := decodeText(hdr.Name, z.TextEncoding)
 	if !utf8.Valid([]byte(filename)) {
-		content, _ := io.ReadAll(transform.NewReader(bytes.NewReader([]byte(filename)), simplifiedchinese.GB18030.NewDecoder()))
+		content, _ := io.ReadAll(transform.NewReader(bytes.NewReader([]byte(hdr.Name)), simplifiedchinese.GB18030.NewDecoder()))
 		filename = string(content)
 	}
 	if err == nil {
