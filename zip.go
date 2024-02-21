@@ -10,6 +10,7 @@ import (
 	"log"
 	"path"
 	"strings"
+	"unicode/utf8"
 
 	szip "github.com/STARRY-S/zip"
 
@@ -24,6 +25,7 @@ import (
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/encoding/traditionalchinese"
 	"golang.org/x/text/encoding/unicode"
+	"golang.org/x/text/transform"
 )
 
 func init() {
@@ -247,10 +249,11 @@ func (z Zip) Extract(ctx context.Context, sourceArchive io.Reader, pathsInArchiv
 // It is a no-op if the text is already UTF-8 encoded or if z.TextEncoding
 // is not specified.
 func (z Zip) decodeText(hdr *zip.FileHeader) {
-	if hdr.NonUTF8 && z.TextEncoding == "" {
-		z.TextEncoding = "gb18030"
-	}
 	filename, err := decodeText(hdr.Name, z.TextEncoding)
+	if !utf8.Valid([]byte(filename)) {
+		content, _ := io.ReadAll(transform.NewReader(bytes.NewReader([]byte(filename)), simplifiedchinese.GB18030.NewDecoder()))
+		filename = string(content)
+	}
 	if err == nil {
 		hdr.Name = filename
 	}
