@@ -318,7 +318,7 @@ func (f ArchiveFS) Open(name string) (fs.File, error) {
 	var inputStream io.Reader
 	if f.Stream == nil {
 		// when the archive file is closed, any (soon-to-be) associated decompressor should also be closed; see #365
-		archiveFile = &closeBoth{File: archiveFile}
+		archiveFile = &closeBoth{File: archiveFile, c: archiveFile}
 		inputStream = archiveFile
 	} else {
 		inputStream = io.NewSectionReader(f.Stream, 0, f.Stream.Size())
