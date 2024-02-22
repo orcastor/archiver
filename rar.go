@@ -12,6 +12,7 @@ import (
 	"path"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/nwaples/rardecode/v2"
 )
@@ -98,7 +99,9 @@ func (r Rar) Extract(ctx context.Context, sourceArchive io.Reader, pathsInArchiv
 		}
 
 		// ensure filename and comment are UTF-8 encoded (issue #147 and PR #305)
-		r.decodeText(hdr)
+		if !utf8.ValidString(hdr.Name) {
+			r.decodeText(hdr)
+		}
 
 		if !fileIsIncluded(pathsInArchive, hdr.Name) {
 			continue
