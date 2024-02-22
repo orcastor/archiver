@@ -247,7 +247,7 @@ func (z Zip) Extract(ctx context.Context, sourceArchive io.Reader, pathsInArchiv
 // It is a no-op if the text is already UTF-8 encoded or if z.TextEncoding
 // is not specified.
 func (z Zip) decodeText(hdr *zip.FileHeader) {
-	if z.TextEncoding != "" {
+	if hdr.NonUTF8 && z.TextEncoding != "" {
 		filename, err := decodeText(hdr.Name, z.TextEncoding)
 		if err == nil {
 			hdr.Name = filename
