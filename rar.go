@@ -28,6 +28,11 @@ type Rar struct {
 
 	// Password to open archives.
 	Password string
+
+	// For files in zip archives that do not have UTF-8
+	// encoded filenames and comments, specify the character
+	// encoding here.
+	TextEncoding string
 }
 
 func (Rar) Name() string { return ".rar" }
@@ -91,6 +96,10 @@ func (r Rar) Extract(ctx context.Context, sourceArchive io.Reader, pathsInArchiv
 			}
 			return err
 		}
+
+		// ensure filename and comment are UTF-8 encoded (issue #147 and PR #305)
+		r.decodeText(hdr)
+
 		if !fileIsIncluded(pathsInArchive, hdr.Name) {
 			continue
 		}
@@ -119,6 +128,18 @@ func (r Rar) Extract(ctx context.Context, sourceArchive io.Reader, pathsInArchiv
 	}
 
 	return nil
+}
+
+// decodeText decodes the name and comment fields from hdr into UTF-8.
+// It is a no-op if the text is already UTF-8 encoded or if z.TextEncoding
+// is not specified.
+func (r Rar) decodeText(hdr *rardecode.FileHeader) {
+	if r.TextEncoding != "" {
+		filename, err := decodeText(hdr.Name, r.TextEncoding)
+		if err == nil {
+			hdr.Name = filename
+		}
+	}
 }
 
 // rarFileInfo satisfies the fs.FileInfo interface for RAR entries.
